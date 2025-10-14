@@ -5,90 +5,254 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>برنامه هفتگی | EduPlanner</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .btn-primary:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .nav-item {
+      transition: color 0.3s ease, background-color 0.3s ease;
+    }
+    .nav-item:hover {
+      color: #3b82f6;
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    .table-cell {
+      transition: background-color 0.3s ease;
+    }
+    .table-cell:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    .modal {
+      transition: opacity 0.3s ease;
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #progressChart {
+      max-width: 100%;
+      height: 200px !important;
+    }
+  </style>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="icons/icon-192.png" type="image/png" />
 </head>
 
-<body class="bg-[#0a0a0f] text-gray-100 min-h-screen flex flex-col items-center p-4">
-  <!-- Header -->
-  <header class="w-full max-w-6xl flex justify-between items-center mb-6 border-b border-purple-700 pb-2">
-    <h1 class="text-2xl font-bold text-purple-400">برنامه هفتگی من</h1>
-    <button id="editBtn" class="bg-purple-600 hover:bg-purple-700 transition text-white px-4 py-2 rounded-xl text-sm">
-      ✏️ اصلاح برنامه
-    </button>
-  </header>
-
-  <!-- Dashboard Stats -->
-  <section class="w-full max-w-6xl grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-    <div class="bg-[#111] rounded-xl p-4 text-center">
-      <h3 class="text-purple-400 font-semibold">زمان مطالعه امروز</h3>
-      <p id="todayTime" class="text-2xl font-bold text-white">۰ دقیقه</p>
-    </div>
-    <div class="bg-[#111] rounded-xl p-4 text-center">
-      <h3 class="text-purple-400 font-semibold">جلسات انجام‌شده</h3>
-      <p id="sessionsCount" class="text-2xl font-bold text-white">۰</p>
-    </div>
-    <div class="bg-[#111] rounded-xl p-4 text-center">
-      <h3 class="text-purple-400 font-semibold">درصد هدف</h3>
-      <p id="progressPercent" class="text-2xl font-bold text-white">۰٪</p>
-    </div>
-    <div class="bg-[#111] rounded-xl p-4 text-center">
-      <h3 class="text-purple-400 font-semibold">هدف پیش‌فرض</h3>
-      <p id="goal" class="text-2xl font-bold text-white">۳ ساعت در روز</p>
-    </div>
-  </section>
-
-  <!-- Weekly Table -->
-  <section id="scheduleSection" class="w-full max-w-6xl bg-[#111] rounded-2xl p-4 shadow-lg mb-8 overflow-x-auto">
-    <table class="min-w-full border-collapse text-center text-sm">
-      <thead class="bg-purple-800 text-white">
-        <tr>
-          <th class="p-2">ساعت</th>
-          <th class="p-2">شنبه</th>
-          <th class="p-2">یک‌شنبه</th>
-          <th class="p-2">دوشنبه</th>
-          <th class="p-2">سه‌شنبه</th>
-          <th class="p-2">چهارشنبه</th>
-          <th class="p-2">پنج‌شنبه</th>
-          <th class="p-2">جمعه</th>
-        </tr>
-      </thead>
-      <tbody id="scheduleTable"></tbody>
-    </table>
-  </section>
-
-  <!-- Chart -->
-  <section class="w-full max-w-6xl bg-[#111] rounded-2xl p-6 mb-8 shadow-lg">
-    <h2 class="text-xl font-semibold mb-4 text-purple-400">پیشرفت هفتگی</h2>
-    <canvas id="progressChart" height="120"></canvas>
-  </section>
-
-  <!-- Modal Edit Plan -->
-  <div id="editModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
-    <div class="bg-[#111] rounded-2xl p-6 w-11/12 max-w-md shadow-xl">
-      <h2 class="text-xl text-purple-400 mb-4">تنظیم برنامه</h2>
-      <label class="block mb-2 text-sm">روز:</label>
-      <select id="daySelect" class="w-full bg-[#222] p-2 rounded mb-3">
-        <option>شنبه</option>
-        <option>یک‌شنبه</option>
-        <option>دوشنبه</option>
-        <option>سه‌شنبه</option>
-        <option>چهارشنبه</option>
-        <option>پنج‌شنبه</option>
-        <option>جمعه</option>
-      </select>
-
-      <label class="block mb-2 text-sm">ساعت شروع:</label>
-      <input id="hourInput" type="time" class="w-full bg-[#222] p-2 rounded mb-3 text-white" />
-
-      <label class="block mb-2 text-sm">نام درس/فعالیت:</label>
-      <input id="subjectInput" type="text" placeholder="مثلاً ریاضی"
-        class="w-full bg-[#222] p-2 rounded mb-4 text-white" />
-
-      <div class="flex justify-end gap-2">
-        <button id="cancelEdit" class="px-4 py-2 rounded-xl bg-gray-600">لغو</button>
-        <button id="saveEdit" class="px-4 py-2 rounded-xl bg-purple-700">ذخیره</button>
+<body class="text-gray-100 min-h-screen flex flex-col overflow-x-hidden">
+  <!-- سایدبار دسکتاپ -->
+  <aside
+    class="hidden lg:flex w-80 bg-slate-900/95 backdrop-blur-lg border-l border-slate-800 flex-col p-8 h-screen fixed right-0 top-0 shadow-2xl"
+    aria-label="نوار کناری"
+  >
+    <div class="flex items-center gap-4 mb-10 border-b border-slate-700 pb-6">
+      <div
+        class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-full flex items-center justify-center text-3xl shadow-md"
+      >
+        <i class="fas fa-user"></i>
+      </div>
+      <div>
+        <p class="font-bold text-blue-300 text-xl">نام کاربر</p>
+        <p class="text-sm text-gray-400">پنل شخصی پیشرفته</p>
       </div>
     </div>
-  </div>
+
+    <nav class="flex-1 space-y-4">
+      <a
+        href="/index.html"
+        class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-home ml-3"></i> داشبورد
+      </a>
+      <a
+        href="/plan.html"
+        class="flex items-center p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-calendar ml-3"></i> برنامه‌ها
+      </a>
+      <a
+        href="/focus.html"
+        class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-bullseye ml-3"></i> تمرکز
+      </a>
+      <a
+        href="#"
+        class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-chart-bar ml-3"></i> آمار
+      </a>
+      <a
+        href="#"
+        class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-cog ml-3"></i> تنظیمات
+      </a>
+    </nav>
+
+    <button
+      class="mt-auto btn-primary text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2"
+      aria-label="خروج از حساب"
+    >
+      <i class="fas fa-sign-out-alt"></i> خروج
+    </button>
+  </aside>
+
+  <main class="flex-1 lg:mr-80 p-6 lg:p-8 pt-20 lg:pt-10">
+    <!-- Header -->
+    <header class="w-full max-w-7xl flex justify-between items-center mb-8 border-b border-slate-700 pb-4 animate-fade-in">
+      <h1 class="text-3xl font-extrabold text-blue-300 tracking-tight">برنامه هفتگی من</h1>
+      <button id="editBtn" class="btn-primary text-white px-6 py-3 rounded-xl text-base font-medium flex items-center gap-2">
+        <i class="fas fa-edit"></i> اصلاح برنامه
+      </button>
+    </header>
+
+    <!-- Dashboard Stats -->
+    <section class="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-4 gap-6 mb-8">
+      <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-6 text-center card animate-fade-in" aria-label="زمان مطالعه امروز">
+        <i class="fas fa-clock text-blue-400 text-2xl mb-3"></i>
+        <h3 class="text-blue-300 font-semibold text-lg mb-2">زمان مطالعه امروز</h3>
+        <p id="todayTime" class="text-3xl font-bold text-white">۰ دقیقه</p>
+      </div>
+      <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-6 text-center card animate-fade-in" aria-label="جلسات انجام‌شده">
+        <i class="fas fa-check-circle text-blue-400 text-2xl mb-3"></i>
+        <h3 class="text-blue-300 font-semibold text-lg mb-2">جلسات انجام‌شده</h3>
+        <p id="sessionsCount" class="text-3xl font-bold text-white">۰</p>
+      </div>
+      <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-6 text-center card animate-fade-in" aria-label="درصد هدف">
+        <i class="fas fa-percentage text-blue-400 text-2xl mb-3"></i>
+        <h3 class="text-blue-300 font-semibold text-lg mb-2">درصد هدف</h3>
+        <p id="progressPercent" class="text-3xl font-bold text-white">۰٪</p>
+      </div>
+      <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-6 text-center card animate-fade-in" aria-label="هدف پیش‌فرض">
+        <i class="fas fa-bullseye text-blue-400 text-2xl mb-3"></i>
+        <h3 class="text-blue-300 font-semibold text-lg mb-2">هدف پیش‌فرض</h3>
+        <p id="goal" class="text-3xl font-bold text-white">۳ ساعت در روز</p>
+      </div>
+    </section>
+
+    <!-- Weekly Table -->
+    <section id="scheduleSection" class="w-full max-w-7xl bg-slate-900/80 backdrop-blur-md rounded-2xl p-6 shadow-lg mb-8 overflow-x-auto animate-fade-in">
+      <table class="min-w-full border-collapse text-center text-base">
+        <thead class="bg-blue-800 text-white">
+          <tr>
+            <th class="p-3 font-bold">ساعت</th>
+            <th class="p-3 font-bold">شنبه</th>
+            <th class="p-3 font-bold">یک‌شنبه</th>
+            <th class="p-3 font-bold">دوشنبه</th>
+            <th class="p-3 font-bold">سه‌شنبه</th>
+            <th class="p-3 font-bold">چهارشنبه</th>
+            <th class="p-3 font-bold">پنج‌شنبه</th>
+            <th class="p-3 font-bold">جمعه</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Chart -->
+    <section class="w-full max-w-7xl bg-slate-900/80 backdrop-blur-md rounded-2xl p-8 mb-8 shadow-lg animate-fade-in">
+      <h2 class="text-2xl font-bold text-blue-300 mb-6 flex items-center gap-2">
+        <i class="fas fa-chart-line"></i> پیشرفت هفتگی
+      </h2>
+      <div class="relative w-full" style="max-width: 100%; height: 200px;">
+        <canvas id="progressChart"></canvas>
+      </div>
+    </section>
+
+    <!-- بخش نکات برنامه‌ریزی -->
+    <section class="w-full max-w-7xl mb-8 animate-fade-in">
+      <h2 class="text-2xl font-bold text-blue-300 mb-6 flex items-center gap-2">
+        <i class="fas fa-lightbulb"></i> نکات برنامه‌ریزی سریع
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-slate-700 card">
+          <p class="text-gray-300">برنامه خود را بر اساس اولویت‌ها تنظیم کنید و زمان‌هایی برای استراحت اختصاص دهید.</p>
+        </div>
+        <div class="bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-slate-700 card">
+          <p class="text-gray-300">پیشرفت خود را روزانه بررسی کنید تا انگیزه‌تان حفظ شود.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal Edit Plan -->
+    <div id="editModal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50 modal">
+      <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-8 w-11/12 max-w-lg shadow-2xl">
+        <h2 class="text-2xl text-blue-300 mb-6 font-bold">تنظیم برنامه</h2>
+        <label class="block mb-2 text-sm text-gray-300 font-medium">روز:</label>
+        <select id="daySelect" class="w-full bg-slate-800 p-3 rounded mb-4 text-white border border-slate-700">
+          <option>شنبه</option>
+          <option>یک‌شنبه</option>
+          <option>دوشنبه</option>
+          <option>سه‌شنبه</option>
+          <option>چهارشنبه</option>
+          <option>پنج‌شنبه</option>
+          <option>جمعه</option>
+        </select>
+
+        <label class="block mb-2 text-sm text-gray-300 font-medium">ساعت شروع:</label>
+        <input id="hourInput" type="time" class="w-full bg-slate-800 p-3 rounded mb-4 text-white border border-slate-700" />
+
+        <label class="block mb-2 text-sm text-gray-300 font-medium">نام درس/فعالیت:</label>
+        <input id="subjectInput" type="text" placeholder="مثلاً ریاضی" class="w-full bg-slate-800 p-3 rounded mb-6 text-white border border-slate-700" />
+
+        <div class="flex justify-end gap-3">
+          <button id="cancelEdit" class="px-6 py-3 rounded-xl bg-gray-600 text-white font-medium">لغو</button>
+          <button id="saveEdit" class="btn-primary px-6 py-3 rounded-xl text-white font-medium">ذخیره</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- نوار پایین موبایل -->
+    <nav
+      class="lg:hidden fixed bottom-0 w-full bg-slate-900/95 backdrop-blur-lg border-t border-slate-700 flex justify-around py-4 text-gray-300 text-sm shadow-lg"
+      aria-label="نوار ناوبری موبایل"
+    >
+      <a href="/index.html" class="flex flex-col items-center nav-item">
+        <i class="fas fa-home text-xl mb-1"></i>
+        <span>خانه</span>
+      </a>
+      <a href="/plan.html" class="flex flex-col items-center nav-item">
+        <i class="fas fa-calendar text-xl mb-1"></i>
+        <span>برنامه</span>
+      </a>
+      <a href="/focus.html" class="flex flex-col items-center nav-item">
+        <i class="fas fa-bullseye text-xl mb-1"></i>
+        <span>تمرکز</span>
+      </a>
+      <a href="#" class="flex flex-col items-center nav-item">
+        <i class="fas fa-chart-bar text-xl mb-1"></i>
+        <span>آمار</span>
+      </a>
+      <a href="#" class="flex flex-col items-center nav-item">
+        <i class="fas fa-cog text-xl mb-1"></i>
+        <span>تنظیم</span>
+      </a>
+    </nav>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -100,59 +264,111 @@
     const daySelect = document.getElementById('daySelect');
     const hourInput = document.getElementById('hourInput');
     const subjectInput = document.getElementById('subjectInput');
+    const todayTime = document.getElementById('todayTime');
+    const sessionsCount = document.getElementById('sessionsCount');
+    const progressPercent = document.getElementById('progressPercent');
+    const goal = document.getElementById('goal');
 
     let plan = JSON.parse(localStorage.getItem('plan')) || {};
-    const hours = ['۸:۰۰', '۹:۰۰', '۱۰:۰۰', '۱۱:۰۰', '۱۲:۰۰', '۱۳:۰۰', '۱۴:۰۰'];
+    const hours = ['۸:۰۰', '۹:۰۰', '۱۰:۰۰', '۱۱:۰۰', '۱۲:۰۰', '۱۳:۰۰', '۱۴:۰۰', '۱۵:۰۰', '۱۶:۰۰', '۱۷:۰۰', '۱۸:۰۰', '۱۹:۰۰', '۲۰:۰۰', '۲۱:۰۰', '۲۲:۰۰'];
 
     function renderTable() {
       scheduleTable.innerHTML = '';
       hours.forEach(h => {
         const row = document.createElement('tr');
-        row.className = 'hover:bg-purple-900/30';
+        row.className = 'hover:bg-blue-900/20 transition';
         row.innerHTML = `
-          <td class='p-2 border border-purple-800 text-gray-400'>${h}</td>
+          <td class='p-3 border border-blue-800 text-gray-400 font-medium'>${h}</td>
           ${['شنبه','یک‌شنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'].map(day =>
-            `<td class='p-2 border border-purple-800 cursor-pointer'>${plan[day]?.[h] || ''}</td>`
+            `<td class='p-3 border border-blue-800 cursor-pointer table-cell relative group'>${plan[day]?.[h] || ''}
+              <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">کلیک برای ویرایش</span>
+            </td>`
           ).join('')}
         `;
         scheduleTable.appendChild(row);
+      });
+      document.querySelectorAll('.table-cell').forEach(cell => {
+        cell.addEventListener('click', (e) => {
+          const rowIndex = e.target.parentElement.rowIndex - 1;
+          const colIndex = e.target.cellIndex - 1;
+          const day = ['شنبه','یک‌شنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'][colIndex];
+          const hour = hours[rowIndex];
+          daySelect.value = day;
+          hourInput.value = hour.replace(':', ':');
+          subjectInput.value = plan[day]?.[hour] || '';
+          modal.classList.remove('hidden');
+        });
       });
     }
 
     renderTable();
 
     editBtn.onclick = () => modal.classList.remove('hidden');
-    cancelEdit.onclick = () => modal.classList.add('hidden');
-
-    saveEdit.onclick = () => {
-      const day = daySelect.value;
-      const hour = hourInput.value ? hourInput.value.replace(':','') : '۸۰۰';
-      const subject = subjectInput.value.trim();
-
-      if (!plan[day]) plan[day] = {};
-      plan[day][`${parseInt(hour)}:۰۰`] = subject;
-      localStorage.setItem('plan', JSON.stringify(plan));
-      renderTable();
+    cancelEdit.onclick = () => {
       modal.classList.add('hidden');
       subjectInput.value = '';
     };
 
-    // نمودار ساده
+    saveEdit.onclick = () => {
+      const day = daySelect.value;
+      const hour = hourInput.value ? hourInput.value : '08:00';
+      const subject = subjectInput.value.trim();
+
+      if (!plan[day]) plan[day] = {};
+      plan[day][hour.replace(':', ':')] = subject;
+      localStorage.setItem('plan', JSON.stringify(plan));
+      renderTable();
+      modal.classList.add('hidden');
+      subjectInput.value = '';
+      updateStats();
+    };
+
+    function updateStats() {
+      const sessions = JSON.parse(localStorage.getItem('sessions')) || [];
+      const totalToday = sessions.filter(s => new Date(s.date).toDateString() === new Date().toDateString())
+        .reduce((sum, s) => sum + s.actualSeconds / 60, 0);
+      todayTime.textContent = `${Math.floor(totalToday)} دقیقه`;
+      sessionsCount.textContent = sessions.length;
+      const dailyGoal = 180;
+      progressPercent.textContent = `${Math.round((totalToday / dailyGoal) * 100)}٪`;
+    }
+
+    updateStats();
+
     const ctx = document.getElementById('progressChart').getContext('2d');
     new Chart(ctx, {
       type: 'line',
       data: {
-        labels: ['شنبه','یک‌شنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'],
+        labels: ['شنبه', 'یک‌شنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'],
         datasets: [{
           label: 'درصد انجام برنامه',
-          data: [0, 0, 0, 0, 0, 0, 0],
-          borderColor: '#a855f7',
-          borderWidth: 2,
-          fill: false,
-          tension: 0.3
+          data: [20, 35, 50, 65, 80, 90, 100],
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#3b82f6',
+          pointHoverBackgroundColor: '#3b82f6',
+          pointHoverBorderColor: '#fff'
         }]
       },
-      options: { scales: { y: { beginAtZero: true, max: 100 } } }
+      options: {
+        scales: {
+          y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' } },
+          x: { grid: { display: false } }
+        },
+        plugins: {
+          legend: { labels: { color: '#fff' } }
+        },
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+
+    document.querySelectorAll('.animate-fade-in').forEach((el, i) => {
+      el.style.animationDelay = `${i * 0.1}s`;
     });
   </script>
 </body>
