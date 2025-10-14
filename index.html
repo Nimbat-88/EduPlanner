@@ -120,7 +120,7 @@
         });
       }
 
-      window.addEventListener('load', () => {
+      window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('today').textContent = new Date().toLocaleDateString('fa-IR', {
           weekday: 'long',
           day: 'numeric',
@@ -133,16 +133,11 @@
       });
     </script>
   </head>
-  <body class="text-gray-100 flex flex-col min-h-screen overflow-hidden">
-    <!-- سایدبار دسکتاپ پیشرفته -->
-    <aside
-      class="hidden lg:flex w-80 bg-slate-900/95 backdrop-blur-lg border-l border-slate-800 flex-col p-8 h-screen fixed right-0 top-0 shadow-2xl"
-      aria-label="نوار کناری"
-    >
+  <body class="text-gray-100 flex flex-col min-h-screen lg:overflow-hidden">
+    <!-- سایدبار دسکتاپ -->
+    <aside class="hidden lg:flex w-80 bg-slate-900/95 backdrop-blur-lg border-l border-slate-800 flex-col p-8 h-screen fixed right-0 top-0 shadow-2xl">
       <div class="flex items-center gap-4 mb-10 border-b border-slate-700 pb-6">
-        <div
-          class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-full flex items-center justify-center text-3xl shadow-md"
-        >
+        <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-full flex items-center justify-center text-3xl shadow-md">
           <i class="fas fa-user"></i>
         </div>
         <div>
@@ -152,78 +147,51 @@
       </div>
 
       <nav class="flex-1 space-y-4">
-        <a
-          href="/index.html"
-          class="flex items-center p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700 nav-item text-lg font-medium"
-        >
+        <a href="/index.html" class="flex items-center p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700 nav-item text-lg font-medium">
           <i class="fas fa-home ml-3"></i> داشبورد
         </a>
-        <a
-          href="/plan.html"
-          class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
-        >
+        <a href="/plan.html" class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium">
           <i class="fas fa-calendar ml-3"></i> برنامه‌ها
         </a>
-        <a
-          href="/focus.html"
-          class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
-        >
+        <a href="/focus.html" class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium">
           <i class="fas fa-bullseye ml-3"></i> تمرکز
         </a>
-        <a
-          href="#"
-          class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
-        >
+        <a href="#" class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium">
           <i class="fas fa-chart-bar ml-3"></i> آمار
         </a>
-        <a
-          href="#"
-          class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
-        >
+        <a href="#" class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium">
           <i class="fas fa-cog ml-3"></i> تنظیمات
         </a>
       </nav>
 
-      <button
-        class="mt-auto btn-primary text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2"
-        aria-label="خروج از حساب"
-      >
+      <button class="mt-auto btn-primary text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2" aria-label="خروج از حساب">
         <i class="fas fa-sign-out-alt"></i> خروج
       </button>
     </aside>
 
+    <!-- محتوای اصلی -->
     <main class="flex-1 lg:mr-80 p-8 pt-20 lg:pt-10 overflow-y-auto">
-      <header
-        class="hidden lg:flex justify-between items-center mb-12 border-b border-slate-700 pb-6"
-      >
+      <!-- Header -->
+      <header class="hidden lg:flex justify-between items-center mb-12 border-b border-slate-700 pb-6">
         <h1 class="text-4xl font-extrabold text-blue-300 tracking-tight">داشبورد آموزشی پیشرفته</h1>
         <div class="text-gray-300 text-base font-medium">
           امروز: <span id="today" class="text-blue-200"></span>
         </div>
       </header>
 
-      <!-- آمار کلیدی با پیشرفت -->
+      <!-- آمار کلیدی -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-        <div
-          class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 text-center card animate-fade-in"
-          aria-label="مدت مطالعه امروز"
-        >
+        <div class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 text-center card animate-fade-in" aria-label="مدت مطالعه امروز">
           <i class="fas fa-clock text-blue-400 text-3xl mb-4"></i>
           <p class="text-base text-gray-300 mb-2 font-medium">مدت مطالعه کل</p>
           <p class="text-4xl font-extrabold text-blue-300" id="totalTime">۰ ساعت ۰ دقیقه</p>
         </div>
-        <div
-          class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 text-center card animate-fade-in"
-          aria-label="تعداد جلسات"
-        >
+        <div class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 text-center card animate-fade-in" aria-label="تعداد جلسات">
           <i class="fas fa-list-ol text-blue-400 text-3xl mb-4"></i>
           <p class="text-base text-gray-300 mb-2 font-medium">تعداد جلسات</p>
           <p class="text-4xl font-extrabold text-blue-300" id="totalSessions">۰</p>
         </div>
-        <div
-          class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 text-center card animate-fade-in"
-          aria-label="درصد تمرکز"
-        >
+        <div class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 text-center card animate-fade-in" aria-label="درصد تمرکز">
           <i class="fas fa-percentage text-blue-400 text-3xl mb-4"></i>
           <p class="text-base text-gray-300 mb-2 font-medium">درصد تمرکز</p>
           <p class="text-4xl font-extrabold text-blue-300" id="focusPercent">۰%</p>
@@ -233,30 +201,19 @@
         </div>
       </section>
 
-      <!-- آمار هفتگی پیشرفته -->
-      <section
-        class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 mb-8 animate-fade-in"
-        aria-label="آمار مطالعه هفتگی"
-      >
+      <!-- آمار هفتگی -->
+      <section class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 mb-8 animate-fade-in" aria-label="آمار مطالعه هفتگی">
         <h2 class="text-2xl font-bold text-blue-300 mb-6 flex items-center gap-2">
           <i class="fas fa-chart-line"></i> آمار مطالعه هفتگی
         </h2>
-        <div
-          class="w-full h-56 bg-slate-800/50 rounded-lg flex items-end justify-around p-6"
-          id="weeklyBars"
-        >
-          <!-- بارها با JS پر می‌شوند -->
-        </div>
+        <div class="w-full h-56 bg-slate-800/50 rounded-lg flex items-end justify-around p-6" id="weeklyBars"></div>
         <div class="flex justify-between mt-4 text-base text-gray-300 px-6 font-medium">
           <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
         </div>
       </section>
 
-      <!-- بخش پیشرفت کلی -->
-      <section
-        class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 mb-8 animate-fade-in"
-        aria-label="پیشرفت کلی"
-      >
+      <!-- پیشرفت کلی -->
+      <section class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 mb-8 animate-fade-in" aria-label="پیشرفت کلی">
         <h2 class="text-2xl font-bold text-blue-300 mb-6 flex items-center gap-2">
           <i class="fas fa-trophy"></i> پیشرفت کلی
         </h2>
@@ -267,7 +224,7 @@
         <p class="text-center text-gray-400 mt-2">به سمت اهداف مطالعه خود پیش بروید!</p>
       </section>
 
-      <!-- بخش نکات سریع -->
+      <!-- نکات سریع -->
       <section class="mb-8 animate-fade-in">
         <h2 class="text-2xl font-bold text-blue-300 mb-6 flex items-center gap-2">
           <i class="fas fa-lightbulb"></i> نکات مطالعه سریع
@@ -283,21 +240,14 @@
       </section>
 
       <div class="text-center mb-16">
-        <a
-          href="/focus.html"
-          class="btn-primary text-white font-bold px-12 py-5 rounded-xl shadow-xl inline-flex items-center gap-3 text-lg"
-          aria-label="شروع حالت تمرکز"
-        >
+        <a href="/focus.html" class="btn-primary text-white font-bold px-12 py-5 rounded-xl shadow-xl inline-flex items-center gap-3 text-lg" aria-label="شروع حالت تمرکز">
           <i class="fas fa-play"></i> شروع حالت تمرکز
         </a>
       </div>
     </main>
 
-    <!-- نوار پایین موبایل پیشرفته -->
-    <nav
-      class="lg:hidden fixed bottom-0 w-full bg-slate-900/95 backdrop-blur-lg border-t border-slate-700 flex justify-around py-4 text-gray-300 text-sm shadow-lg"
-      aria-label="نوار ناوبری موبایل"
-    >
+    <!-- نوار پایین موبایل -->
+    <nav class="lg:hidden fixed bottom-0 w-full bg-slate-900/95 backdrop-blur-lg border-t border-slate-700 flex justify-around py-4 text-gray-300 text-sm shadow-lg" aria-label="نوار ناوبری موبایل">
       <a href="/index.html" class="flex flex-col items-center nav-item">
         <i class="fas fa-home text-xl mb-1"></i>
         <span>خانه</span>
