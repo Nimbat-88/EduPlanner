@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>برنامه هفتگی | EduPlanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#0a0a0f] text-gray-100 min-h-screen flex flex-col items-center p-4">
+  <!-- Header -->
+  <header class="w-full max-w-6xl flex justify-between items-center mb-6 border-b border-purple-700 pb-2">
+    <h1 class="text-2xl font-bold text-purple-400">برنامه هفتگی من</h1>
+    <button id="editBtn" class="bg-purple-600 hover:bg-purple-700 transition text-white px-4 py-2 rounded-xl text-sm">
+      ✏️ اصلاح برنامه
+    </button>
+  </header>
+
+  <!-- Dashboard Stats -->
+  <section class="w-full max-w-6xl grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="bg-[#111] rounded-xl p-4 text-center">
+      <h3 class="text-purple-400 font-semibold">زمان مطالعه امروز</h3>
+      <p id="todayTime" class="text-2xl font-bold text-white">۰ دقیقه</p>
+    </div>
+    <div class="bg-[#111] rounded-xl p-4 text-center">
+      <h3 class="text-purple-400 font-semibold">جلسات انجام‌شده</h3>
+      <p id="sessionsCount" class="text-2xl font-bold text-white">۰</p>
+    </div>
+    <div class="bg-[#111] rounded-xl p-4 text-center">
+      <h3 class="text-purple-400 font-semibold">درصد هدف</h3>
+      <p id="progressPercent" class="text-2xl font-bold text-white">۰٪</p>
+    </div>
+    <div class="bg-[#111] rounded-xl p-4 text-center">
+      <h3 class="text-purple-400 font-semibold">هدف پیش‌فرض</h3>
+      <p id="goal" class="text-2xl font-bold text-white">۳ ساعت در روز</p>
+    </div>
+  </section>
+
+  <!-- Weekly Table -->
+  <section id="scheduleSection" class="w-full max-w-6xl bg-[#111] rounded-2xl p-4 shadow-lg mb-8 overflow-x-auto">
+    <table class="min-w-full border-collapse text-center text-sm">
+      <thead class="bg-purple-800 text-white">
+        <tr>
+          <th class="p-2">ساعت</th>
+          <th class="p-2">شنبه</th>
+          <th class="p-2">یک‌شنبه</th>
+          <th class="p-2">دوشنبه</th>
+          <th class="p-2">سه‌شنبه</th>
+          <th class="p-2">چهارشنبه</th>
+          <th class="p-2">پنج‌شنبه</th>
+          <th class="p-2">جمعه</th>
+        </tr>
+      </thead>
+      <tbody id="scheduleTable"></tbody>
+    </table>
+  </section>
+
+  <!-- Chart -->
+  <section class="w-full max-w-6xl bg-[#111] rounded-2xl p-6 mb-8 shadow-lg">
+    <h2 class="text-xl font-semibold mb-4 text-purple-400">پیشرفت هفتگی</h2>
+    <canvas id="progressChart" height="120"></canvas>
+  </section>
+
+  <!-- Modal Edit Plan -->
+  <div id="editModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+    <div class="bg-[#111] rounded-2xl p-6 w-11/12 max-w-md shadow-xl">
+      <h2 class="text-xl text-purple-400 mb-4">تنظیم برنامه</h2>
+      <label class="block mb-2 text-sm">روز:</label>
+      <select id="daySelect" class="w-full bg-[#222] p-2 rounded mb-3">
+        <option>شنبه</option>
+        <option>یک‌شنبه</option>
+        <option>دوشنبه</option>
+        <option>سه‌شنبه</option>
+        <option>چهارشنبه</option>
+        <option>پنج‌شنبه</option>
+        <option>جمعه</option>
+      </select>
+
+      <label class="block mb-2 text-sm">ساعت شروع:</label>
+      <input id="hourInput" type="time" class="w-full bg-[#222] p-2 rounded mb-3 text-white" />
+
+      <label class="block mb-2 text-sm">نام درس/فعالیت:</label>
+      <input id="subjectInput" type="text" placeholder="مثلاً ریاضی"
+        class="w-full bg-[#222] p-2 rounded mb-4 text-white" />
+
+      <div class="flex justify-end gap-2">
+        <button id="cancelEdit" class="px-4 py-2 rounded-xl bg-gray-600">لغو</button>
+        <button id="saveEdit" class="px-4 py-2 rounded-xl bg-purple-700">ذخیره</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const scheduleTable = document.getElementById('scheduleTable');
+    const editBtn = document.getElementById('editBtn');
+    const modal = document.getElementById('editModal');
+    const cancelEdit = document.getElementById('cancelEdit');
+    const saveEdit = document.getElementById('saveEdit');
+    const daySelect = document.getElementById('daySelect');
+    const hourInput = document.getElementById('hourInput');
+    const subjectInput = document.getElementById('subjectInput');
+
+    let plan = JSON.parse(localStorage.getItem('plan')) || {};
+    const hours = ['۸:۰۰', '۹:۰۰', '۱۰:۰۰', '۱۱:۰۰', '۱۲:۰۰', '۱۳:۰۰', '۱۴:۰۰'];
+
+    function renderTable() {
+      scheduleTable.innerHTML = '';
+      hours.forEach(h => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-purple-900/30';
+        row.innerHTML = `
+          <td class='p-2 border border-purple-800 text-gray-400'>${h}</td>
+          ${['شنبه','یک‌شنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'].map(day =>
+            `<td class='p-2 border border-purple-800 cursor-pointer'>${plan[day]?.[h] || ''}</td>`
+          ).join('')}
+        `;
+        scheduleTable.appendChild(row);
+      });
+    }
+
+    renderTable();
+
+    editBtn.onclick = () => modal.classList.remove('hidden');
+    cancelEdit.onclick = () => modal.classList.add('hidden');
+
+    saveEdit.onclick = () => {
+      const day = daySelect.value;
+      const hour = hourInput.value ? hourInput.value.replace(':','') : '۸۰۰';
+      const subject = subjectInput.value.trim();
+
+      if (!plan[day]) plan[day] = {};
+      plan[day][`${parseInt(hour)}:۰۰`] = subject;
+      localStorage.setItem('plan', JSON.stringify(plan));
+      renderTable();
+      modal.classList.add('hidden');
+      subjectInput.value = '';
+    };
+
+    // نمودار ساده
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['شنبه','یک‌شنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'],
+        datasets: [{
+          label: 'درصد انجام برنامه',
+          data: [0, 0, 0, 0, 0, 0, 0],
+          borderColor: '#a855f7',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3
+        }]
+      },
+      options: { scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EduPlanner | داشبورد</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Vazirmatn', sans-serif;
+      }
+      .bar {
+        transition: height 0.5s ease;
+      }
+    </style>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1e1b4b" />
+    <link rel="icon" href="icons/icon-192.png" type="image/png" />
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('service-worker.js')
+            .then(() => console.log('SW Registered'))
+            .catch((err) => console.error('SW failed:', err));
+        });
+      }
+
+      // ==== مدیریت داده جلسات ====
+      function getSessions() {
+        return JSON.parse(localStorage.getItem('sessions') || '[]');
+      }
+
+      function calculateStats() {
+        const sessions = getSessions();
+        let totalStudySeconds = sessions.reduce(
+          (sum, s) => sum + s.actualSeconds,
+          0
+        );
+        let totalSessions = sessions.length;
+        let focusPercent = totalSessions
+          ? Math.round(
+              (sessions.reduce(
+                (sum, s) => sum + s.actualSeconds / (s.plannedMinutes * 60),
+                0
+              ) /
+                totalSessions) *
+                100
+            )
+          : 0;
+
+        document.getElementById('totalTime').textContent = `${Math.floor(
+          totalStudySeconds / 60
+        )} دقیقه`;
+        document.getElementById('totalSessions').textContent = totalSessions;
+        document.getElementById(
+          'focusPercent'
+        ).textContent = `${focusPercent}%`;
+
+        // نمودار هفتگی با انیمیشن
+        const days = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+        const barContainer = document.getElementById('weeklyBars');
+        barContainer.innerHTML = '';
+        for (let i = 0; i < 7; i++) {
+          let dayTotal = sessions
+            .filter((s) => {
+              const d = new Date(s.date).getDay();
+              return d === i;
+            })
+            .reduce((sum, s) => sum + s.actualSeconds, 0);
+          let heightPercent = Math.min(100, Math.floor(dayTotal / 60));
+          let bar = document.createElement('div');
+          bar.className = 'w-6 bg-purple-500 rounded-t bar';
+          bar.style.height = '0%';
+          barContainer.appendChild(bar);
+          setTimeout(() => {
+            bar.style.height = heightPercent + '%';
+          }, 100); // انیمیشن
+        }
+      }
+
+      window.addEventListener('load', () => {
+        document.getElementById('today').textContent =
+          new Date().toLocaleDateString('fa-IR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          });
+        calculateStats();
+      });
+    </script>
+  </head>
+  <body class="bg-gray-950 text-gray-100 flex flex-col min-h-screen">
+    <!-- سایدبار دسکتاپ -->
+    <aside
+      class="hidden lg:flex w-64 bg-gray-900 border-l border-gray-800 flex-col p-4 h-screen fixed right-0 top-0"
+    >
+      <div class="flex items-center gap-3 mb-6 border-b border-gray-800 pb-4">
+        <div
+          class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-xl"
+        >
+          👤
+        </div>
+        <div>
+          <p class="font-semibold text-purple-400">نام کاربر</p>
+          <p class="text-sm text-gray-400">پنل شخصی</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 space-y-2">
+        <a
+          href="/index.html"
+          class="flex items-center p-3 rounded-lg hover:bg-gray-800"
+          ><span class="ml-3">🏠</span>داشبورد</a
+        >
+        <a href="/plan.html" class="flex items-center p-3 rounded-lg hover:bg-gray-800"
+          ><span class="ml-3">📅</span>برنامه‌ها</a
+        >
+        <a
+          href="/focus.html"
+          class="flex items-center p-3 rounded-lg hover:bg-gray-800"
+          ><span class="ml-3">🎯</span>تمرکز</a
+        >
+        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-800"
+          ><span class="ml-3">📊</span>آمار</a
+        >
+        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-800"
+          ><span class="ml-3">⚙️</span>تنظیمات</a
+        >
+      </nav>
+
+      <button
+        class="mt-auto bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold"
+      >
+        خروج
+      </button>
+    </aside>
+
+    <main class="flex-1 lg:mr-64 p-4 pt-16 lg:pt-6">
+      <header
+        class="hidden lg:flex justify-between items-center mb-8 border-b border-gray-800 pb-4"
+      >
+        <h1 class="text-2xl font-bold text-purple-400">داشبورد آموزشی</h1>
+        <div class="text-gray-400 text-sm">امروز: <span id="today"></span></div>
+      </header>
+
+      <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div
+          class="bg-gray-900 p-5 rounded-2xl border border-gray-800 text-center hover:scale-105 transition"
+        >
+          <p class="text-sm text-gray-400 mb-1">مدت مطالعه امروز</p>
+          <p class="text-2xl font-bold text-purple-400" id="totalTime">
+            ۰ دقیقه
+          </p>
+        </div>
+        <div
+          class="bg-gray-900 p-5 rounded-2xl border border-gray-800 text-center hover:scale-105 transition"
+        >
+          <p class="text-sm text-gray-400 mb-1">تعداد جلسات</p>
+          <p class="text-2xl font-bold text-purple-400" id="totalSessions">۰</p>
+        </div>
+        <div
+          class="bg-gray-900 p-5 rounded-2xl border border-gray-800 text-center hover:scale-105 transition"
+        >
+          <p class="text-sm text-gray-400 mb-1">درصد تمرکز</p>
+          <p class="text-2xl font-bold text-purple-400" id="focusPercent">۰%</p>
+        </div>
+      </section>
+
+      <section class="bg-gray-900 p-5 rounded-2xl border border-gray-800 mb-8">
+        <h2 class="text-lg font-semibold text-purple-300 mb-4">
+          آمار مطالعه هفتگی
+        </h2>
+        <div
+          class="w-full h-40 bg-gray-800 rounded-lg flex items-end justify-around p-3"
+          id="weeklyBars"
+        >
+          <!-- بارها با JS پر می‌شوند -->
+        </div>
+        <div class="flex justify-between mt-2 text-xs text-gray-400 px-2">
+          <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span
+          ><span>پ</span><span>ج</span>
+        </div>
+      </section>
+
+      <div class="text-center mb-12">
+        <a
+          href="/focus.html"
+          class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-transform hover:scale-105"
+        >
+          🎯 شروع حالت تمرکز
+        </a>
+      </div>
+    </main>
+    <!-- نوار پایین موبایل -->
+    <nav
+      class="lg:hidden fixed bottom-0 w-full bg-gray-900 border-t border-gray-800 flex justify-around py-2 text-gray-400 text-sm"
+    >
+      <button class="flex flex-col items-center hover:text-purple-400">
+        <a href=""><span>🏠</span><span>خانه</span></a>
+      </button>
+      <button class="flex flex-col items-center hover:text-purple-400">
+        <a href="/plan.html"><span>📅</span><span>برنامه</span></a>
+      </button>
+      <button class="flex flex-col items-center hover:text-purple-400">
+        <a href="/focus.html"><span>🎯</span><span>تمرکز</span></a>
+      </button>
+      <button class="flex flex-col items-center hover:text-purple-400">
+        <a href=""><span>📊</span><span>آمار</span></a>
+      </button>
+      <button class="flex flex-col items-center hover:text-purple-400">
+        <a href=""><span>⚙️</span><span>تنظیم</span></a>
+      </button>
+    </nav>
+  </body>
+</html>
