@@ -6,18 +6,54 @@
     <title>EduPlanner | داشبورد</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
       body {
         font-family: 'Vazirmatn', sans-serif;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       }
       .bar {
-        transition: height 0.5s ease;
+        transition: height 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      }
+      .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+      .nav-item {
+        transition: color 0.3s ease, background-color 0.3s ease;
+      }
+      .nav-item:hover {
+        color: #3b82f6;
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+      .btn-primary {
+        background: linear-gradient(90deg, #2563eb, #3b82f6);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .btn-primary:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+      }
+      .progress-bar {
+        transition: width 1s ease-in-out;
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
     </style>
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#1e1b4b" />
+    <meta name="theme-color" content="#2563eb" />
     <link rel="icon" href="icons/icon-192.png" type="image/png" />
 
     <script>
@@ -30,191 +66,258 @@
         });
       }
 
-      // ==== مدیریت داده جلسات ====
       function getSessions() {
         return JSON.parse(localStorage.getItem('sessions') || '[]');
       }
 
       function calculateStats() {
         const sessions = getSessions();
-        let totalStudySeconds = sessions.reduce(
-          (sum, s) => sum + s.actualSeconds,
-          0
-        );
+        let totalStudySeconds = sessions.reduce((sum, s) => sum + s.actualSeconds, 0);
         let totalSessions = sessions.length;
         let focusPercent = totalSessions
           ? Math.round(
-              (sessions.reduce(
-                (sum, s) => sum + s.actualSeconds / (s.plannedMinutes * 60),
-                0
-              ) /
-                totalSessions) *
-                100
+              (sessions.reduce((sum, s) => sum + s.actualSeconds / (s.plannedMinutes * 60), 0) / totalSessions) * 100
             )
           : 0;
 
-        document.getElementById('totalTime').textContent = `${Math.floor(
-          totalStudySeconds / 60
-        )} دقیقه`;
+        document.getElementById('totalTime').textContent = `${Math.floor(totalStudySeconds / 3600)} ساعت ${Math.floor((totalStudySeconds % 3600) / 60)} دقیقه`;
         document.getElementById('totalSessions').textContent = totalSessions;
-        document.getElementById(
-          'focusPercent'
-        ).textContent = `${focusPercent}%`;
+        document.getElementById('focusPercent').textContent = `${focusPercent}%`;
+        document.getElementById('focusBar').style.width = `${focusPercent}%`;
 
-        // نمودار هفتگی با انیمیشن
+        const overallProgress = Math.min(100, Math.floor((totalStudySeconds / 3600) / 100 * 100));
+        document.getElementById('overallProgress').textContent = `${overallProgress}%`;
+        document.getElementById('progressBar').style.width = `${overallProgress}%`;
+
         const days = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
         const barContainer = document.getElementById('weeklyBars');
         barContainer.innerHTML = '';
+        let maxDayTotal = 0;
+        const dayTotals = [];
         for (let i = 0; i < 7; i++) {
           let dayTotal = sessions
-            .filter((s) => {
-              const d = new Date(s.date).getDay();
-              return d === i;
-            })
+            .filter((s) => new Date(s.date).getDay() === i)
             .reduce((sum, s) => sum + s.actualSeconds, 0);
-          let heightPercent = Math.min(100, Math.floor(dayTotal / 60));
+          dayTotals.push(dayTotal);
+          if (dayTotal > maxDayTotal) maxDayTotal = dayTotal;
+        }
+        dayTotals.forEach((dayTotal, i) => {
+          let heightPercent = maxDayTotal > 0 ? (dayTotal / maxDayTotal) * 100 : 0;
           let bar = document.createElement('div');
-          bar.className = 'w-6 bg-purple-500 rounded-t bar';
+          bar.className = 'w-12 bg-gradient-to-t from-blue-500 to-blue-300 rounded-t bar relative';
           bar.style.height = '0%';
+          bar.setAttribute('aria-label', `مطالعه در روز ${days[i]}: ${Math.floor(dayTotal / 60)} دقیقه`);
+          const tooltip = document.createElement('span');
+          tooltip.className = 'absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity';
+          tooltip.textContent = `${Math.floor(dayTotal / 60)} دقیقه`;
+          bar.appendChild(tooltip);
+          bar.addEventListener('mouseenter', () => tooltip.classList.add('opacity-100'));
+          bar.addEventListener('mouseleave', () => tooltip.classList.remove('opacity-100'));
           barContainer.appendChild(bar);
           setTimeout(() => {
             bar.style.height = heightPercent + '%';
-          }, 100); // انیمیشن
-        }
+          }, 150 * i);
+        });
       }
 
       window.addEventListener('load', () => {
-        document.getElementById('today').textContent =
-          new Date().toLocaleDateString('fa-IR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          });
+        document.getElementById('today').textContent = new Date().toLocaleDateString('fa-IR', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        });
         calculateStats();
+        document.querySelectorAll('.animate-fade-in').forEach((el, i) => {
+          el.style.animationDelay = `${i * 0.1}s`;
+        });
       });
     </script>
   </head>
-  <body class="bg-gray-950 text-gray-100 flex flex-col min-h-screen">
-    <!-- سایدبار دسکتاپ -->
+  <body class="text-gray-100 flex flex-col min-h-screen overflow-hidden">
+    <!-- سایدبار دسکتاپ پیشرفته -->
     <aside
-      class="hidden lg:flex w-64 bg-gray-900 border-l border-gray-800 flex-col p-4 h-screen fixed right-0 top-0"
+      class="hidden lg:flex w-80 bg-slate-900/95 backdrop-blur-lg border-l border-slate-800 flex-col p-8 h-screen fixed right-0 top-0 shadow-2xl"
+      aria-label="نوار کناری"
     >
-      <div class="flex items-center gap-3 mb-6 border-b border-gray-800 pb-4">
+      <div class="flex items-center gap-4 mb-10 border-b border-slate-700 pb-6">
         <div
-          class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-xl"
+          class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-full flex items-center justify-center text-3xl shadow-md"
         >
-          👤
+          <i class="fas fa-user"></i>
         </div>
         <div>
-          <p class="font-semibold text-purple-400">نام کاربر</p>
-          <p class="text-sm text-gray-400">پنل شخصی</p>
+          <p class="font-bold text-blue-300 text-xl">نام کاربر</p>
+          <p class="text-sm text-gray-400">پنل شخصی پیشرفته</p>
         </div>
       </div>
 
-      <nav class="flex-1 space-y-2">
+      <nav class="flex-1 space-y-4">
         <a
           href="/index.html"
-          class="flex items-center p-3 rounded-lg hover:bg-gray-800"
-          ><span class="ml-3">🏠</span>داشبورد</a
+          class="flex items-center p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700 nav-item text-lg font-medium"
         >
-        <a href="/plan.html" class="flex items-center p-3 rounded-lg hover:bg-gray-800"
-          ><span class="ml-3">📅</span>برنامه‌ها</a
+          <i class="fas fa-home ml-3"></i> داشبورد
+        </a>
+        <a
+          href="/plan.html"
+          class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
         >
+          <i class="fas fa-calendar ml-3"></i> برنامه‌ها
+        </a>
         <a
           href="/focus.html"
-          class="flex items-center p-3 rounded-lg hover:bg-gray-800"
-          ><span class="ml-3">🎯</span>تمرکز</a
+          class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
         >
-        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-800"
-          ><span class="ml-3">📊</span>آمار</a
+          <i class="fas fa-bullseye ml-3"></i> تمرکز
+        </a>
+        <a
+          href="#"
+          class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
         >
-        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-800"
-          ><span class="ml-3">⚙️</span>تنظیمات</a
+          <i class="fas fa-chart-bar ml-3"></i> آمار
+        </a>
+        <a
+          href="#"
+          class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
         >
+          <i class="fas fa-cog ml-3"></i> تنظیمات
+        </a>
       </nav>
 
       <button
-        class="mt-auto bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold"
+        class="mt-auto btn-primary text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2"
+        aria-label="خروج از حساب"
       >
-        خروج
+        <i class="fas fa-sign-out-alt"></i> خروج
       </button>
     </aside>
 
-    <main class="flex-1 lg:mr-64 p-4 pt-16 lg:pt-6">
+    <main class="flex-1 lg:mr-80 p-8 pt-20 lg:pt-10 overflow-y-auto">
       <header
-        class="hidden lg:flex justify-between items-center mb-8 border-b border-gray-800 pb-4"
+        class="hidden lg:flex justify-between items-center mb-12 border-b border-slate-700 pb-6"
       >
-        <h1 class="text-2xl font-bold text-purple-400">داشبورد آموزشی</h1>
-        <div class="text-gray-400 text-sm">امروز: <span id="today"></span></div>
+        <h1 class="text-4xl font-extrabold text-blue-300 tracking-tight">داشبورد آموزشی پیشرفته</h1>
+        <div class="text-gray-300 text-base font-medium">
+          امروز: <span id="today" class="text-blue-200"></span>
+        </div>
       </header>
 
-      <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <!-- آمار کلیدی با پیشرفت -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
         <div
-          class="bg-gray-900 p-5 rounded-2xl border border-gray-800 text-center hover:scale-105 transition"
+          class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 text-center card animate-fade-in"
+          aria-label="مدت مطالعه امروز"
         >
-          <p class="text-sm text-gray-400 mb-1">مدت مطالعه امروز</p>
-          <p class="text-2xl font-bold text-purple-400" id="totalTime">
-            ۰ دقیقه
-          </p>
+          <i class="fas fa-clock text-blue-400 text-3xl mb-4"></i>
+          <p class="text-base text-gray-300 mb-2 font-medium">مدت مطالعه کل</p>
+          <p class="text-4xl font-extrabold text-blue-300" id="totalTime">۰ ساعت ۰ دقیقه</p>
         </div>
         <div
-          class="bg-gray-900 p-5 rounded-2xl border border-gray-800 text-center hover:scale-105 transition"
+          class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 text-center card animate-fade-in"
+          aria-label="تعداد جلسات"
         >
-          <p class="text-sm text-gray-400 mb-1">تعداد جلسات</p>
-          <p class="text-2xl font-bold text-purple-400" id="totalSessions">۰</p>
+          <i class="fas fa-list-ol text-blue-400 text-3xl mb-4"></i>
+          <p class="text-base text-gray-300 mb-2 font-medium">تعداد جلسات</p>
+          <p class="text-4xl font-extrabold text-blue-300" id="totalSessions">۰</p>
         </div>
         <div
-          class="bg-gray-900 p-5 rounded-2xl border border-gray-800 text-center hover:scale-105 transition"
+          class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 text-center card animate-fade-in"
+          aria-label="درصد تمرکز"
         >
-          <p class="text-sm text-gray-400 mb-1">درصد تمرکز</p>
-          <p class="text-2xl font-bold text-purple-400" id="focusPercent">۰%</p>
+          <i class="fas fa-percentage text-blue-400 text-3xl mb-4"></i>
+          <p class="text-base text-gray-300 mb-2 font-medium">درصد تمرکز</p>
+          <p class="text-4xl font-extrabold text-blue-300" id="focusPercent">۰%</p>
+          <div class="mt-4 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div id="focusBar" class="h-full bg-blue-500 progress-bar"></div>
+          </div>
         </div>
       </section>
 
-      <section class="bg-gray-900 p-5 rounded-2xl border border-gray-800 mb-8">
-        <h2 class="text-lg font-semibold text-purple-300 mb-4">
-          آمار مطالعه هفتگی
+      <!-- آمار هفتگی پیشرفته -->
+      <section
+        class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 mb-8 animate-fade-in"
+        aria-label="آمار مطالعه هفتگی"
+      >
+        <h2 class="text-2xl font-bold text-blue-300 mb-6 flex items-center gap-2">
+          <i class="fas fa-chart-line"></i> آمار مطالعه هفتگی
         </h2>
         <div
-          class="w-full h-40 bg-gray-800 rounded-lg flex items-end justify-around p-3"
+          class="w-full h-56 bg-slate-800/50 rounded-lg flex items-end justify-around p-6"
           id="weeklyBars"
         >
           <!-- بارها با JS پر می‌شوند -->
         </div>
-        <div class="flex justify-between mt-2 text-xs text-gray-400 px-2">
-          <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span
-          ><span>پ</span><span>ج</span>
+        <div class="flex justify-between mt-4 text-base text-gray-300 px-6 font-medium">
+          <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
         </div>
       </section>
 
-      <div class="text-center mb-12">
+      <!-- بخش پیشرفت کلی -->
+      <section
+        class="bg-slate-900/80 backdrop-blur-md p-8 rounded-2xl border border-slate-700 mb-8 animate-fade-in"
+        aria-label="پیشرفت کلی"
+      >
+        <h2 class="text-2xl font-bold text-blue-300 mb-6 flex items-center gap-2">
+          <i class="fas fa-trophy"></i> پیشرفت کلی
+        </h2>
+        <div class="h-4 bg-slate-800 rounded-full overflow-hidden mb-4">
+          <div id="progressBar" class="h-full bg-gradient-to-r from-blue-500 to-green-400 progress-bar"></div>
+        </div>
+        <p class="text-center text-3xl font-bold text-blue-300" id="overallProgress">۰%</p>
+        <p class="text-center text-gray-400 mt-2">به سمت اهداف مطالعه خود پیش بروید!</p>
+      </section>
+
+      <!-- بخش نکات سریع -->
+      <section class="mb-8 animate-fade-in">
+        <h2 class="text-2xl font-bold text-blue-300 mb-6 flex items-center gap-2">
+          <i class="fas fa-lightbulb"></i> نکات مطالعه سریع
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-slate-700 card">
+            <p class="text-gray-300">برای افزایش تمرکز، از تکنیک پومودورو استفاده کنید: ۲۵ دقیقه مطالعه، ۵ دقیقه استراحت.</p>
+          </div>
+          <div class="bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-slate-700 card">
+            <p class="text-gray-300">اهداف روزانه تنظیم کنید تا پیشرفت خود را پیگیری کنید.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="text-center mb-16">
         <a
           href="/focus.html"
-          class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-transform hover:scale-105"
+          class="btn-primary text-white font-bold px-12 py-5 rounded-xl shadow-xl inline-flex items-center gap-3 text-lg"
+          aria-label="شروع حالت تمرکز"
         >
-          🎯 شروع حالت تمرکز
+          <i class="fas fa-play"></i> شروع حالت تمرکز
         </a>
       </div>
     </main>
-    <!-- نوار پایین موبایل -->
+
+    <!-- نوار پایین موبایل پیشرفته -->
     <nav
-      class="lg:hidden fixed bottom-0 w-full bg-gray-900 border-t border-gray-800 flex justify-around py-2 text-gray-400 text-sm"
+      class="lg:hidden fixed bottom-0 w-full bg-slate-900/95 backdrop-blur-lg border-t border-slate-700 flex justify-around py-4 text-gray-300 text-sm shadow-lg"
+      aria-label="نوار ناوبری موبایل"
     >
-      <button class="flex flex-col items-center hover:text-purple-400">
-        <a href=""><span>🏠</span><span>خانه</span></a>
-      </button>
-      <button class="flex flex-col items-center hover:text-purple-400">
-        <a href="/plan.html"><span>📅</span><span>برنامه</span></a>
-      </button>
-      <button class="flex flex-col items-center hover:text-purple-400">
-        <a href="/focus.html"><span>🎯</span><span>تمرکز</span></a>
-      </button>
-      <button class="flex flex-col items-center hover:text-purple-400">
-        <a href=""><span>📊</span><span>آمار</span></a>
-      </button>
-      <button class="flex flex-col items-center hover:text-purple-400">
-        <a href=""><span>⚙️</span><span>تنظیم</span></a>
-      </button>
+      <a href="/index.html" class="flex flex-col items-center nav-item">
+        <i class="fas fa-home text-xl mb-1"></i>
+        <span>خانه</span>
+      </a>
+      <a href="/plan.html" class="flex flex-col items-center nav-item">
+        <i class="fas fa-calendar text-xl mb-1"></i>
+        <span>برنامه</span>
+      </a>
+      <a href="/focus.html" class="flex flex-col items-center nav-item">
+        <i class="fas fa-bullseye text-xl mb-1"></i>
+        <span>تمرکز</span>
+      </a>
+      <a href="#" class="flex flex-col items-center nav-item">
+        <i class="fas fa-chart-bar text-xl mb-1"></i>
+        <span>آمار</span>
+      </a>
+      <a href="#" class="flex flex-col items-center nav-item">
+        <i class="fas fa-cog text-xl mb-1"></i>
+        <span>تنظیم</span>
+      </a>
     </nav>
   </body>
 </html>
