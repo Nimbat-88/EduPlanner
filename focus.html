@@ -1,242 +1,449 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Focus Mode حرفه‌ای با تشخیص مطالعه واقعی - EduPlanner</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.6.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
-<style>
-body{font-family: Vazirmatn,sans-serif;}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focus Mode حرفه‌ای با تشخیص مطالعه واقعی - EduPlanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://unpkg.com/pdfjs-dist@latest/build/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.6.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+  <style>
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .btn-primary:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .nav-item {
+      transition: color 0.3s ease, background-color 0.3s ease;
+    }
+    .nav-item:hover {
+      color: #3b82f6;
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="icons/icon-192.png" type="image/png" />
 </head>
-<body class="bg-gray-950 text-gray-100 flex flex-col min-h-screen">
+<body class="text-gray-100 min-h-screen flex flex-col overflow-x-hidden">
+  <!-- سایدبار دسکتاپ -->
+  <aside
+    class="hidden lg:flex w-80 bg-slate-900/95 backdrop-blur-lg border-l border-slate-800 flex-col p-8 h-screen fixed right-0 top-0 shadow-2xl"
+    aria-label="نوار کناری"
+  >
+    <div class="flex items-center gap-4 mb-10 border-b border-slate-700 pb-6">
+      <div
+        class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-full flex items-center justify-center text-3xl shadow-md"
+      >
+        <i class="fas fa-user"></i>
+      </div>
+      <div>
+        <p class="font-bold text-blue-300 text-xl">نام کاربر</p>
+        <p class="text-sm text-gray-400">پنل شخصی پیشرفته</p>
+      </div>
+    </div>
 
-<main class="flex-1 flex flex-col items-center justify-center p-6">
+    <nav class="flex-1 space-y-4">
+      <a
+        href="/index.html"
+        class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-home ml-3"></i> داشبورد
+      </a>
+      <a
+        href="/plan.html"
+        class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-calendar ml-3"></i> برنامه‌ها
+      </a>
+      <a
+        href="/focus.html"
+        class="flex items-center p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-bullseye ml-3"></i> تمرکز
+      </a>
+      <a
+        href="#"
+        class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-chart-bar ml-3"></i> آمار
+      </a>
+      <a
+        href="#"
+        class="flex items-center p-4 rounded-xl hover:bg-slate-700 nav-item text-lg font-medium"
+      >
+        <i class="fas fa-cog ml-3"></i> تنظیمات
+      </a>
+    </nav>
 
-<div class="w-full max-w-3xl bg-gray-900 border border-gray-800 rounded-2xl p-6 text-center shadow-lg">
+    <button
+      class="mt-auto btn-primary text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2"
+      aria-label="خروج از حساب"
+    >
+      <i class="fas fa-sign-out-alt"></i> خروج
+    </button>
+  </aside>
 
-<h1 class="text-2xl font-bold text-purple-400 mb-4">Focus Mode پیشرفته</h1>
+  <main class="flex-1 lg:mr-80 p-6 lg:p-8 pt-20 lg:pt-10 flex flex-col items-center justify-center">
+    <div class="w-full max-w-4xl bg-slate-900/80 backdrop-blur-md border border-slate-700 rounded-2xl p-8 text-center shadow-xl card animate-fade-in">
 
-<!-- فرم ایجاد جلسه -->
-<div id="sessionForm" class="mb-6 text-left text-gray-300 space-y-3">
-<label>مبحث درس</label>
-<input id="sessionTitle" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100" placeholder="مثلاً: ریاضی فصل ۳">
+      <h1 class="text-3xl font-bold text-blue-300 mb-6">Focus Mode پیشرفته</h1>
 
-<div class="flex flex-wrap gap-3">
-<div class="text-center">
-<label class="text-sm text-gray-400 block mb-1">مدت مطالعه (دقیقه)</label>
-<input id="studyMinutes" type="number" min="1" value="25" class="w-28 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-center">
-</div>
-<div class="text-center">
-<label class="text-sm text-gray-400 block mb-1">مدت استراحت (دقیقه)</label>
-<input id="breakMinutes" type="number" min="1" value="5" class="w-28 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-center">
-</div>
-<div class="text-center">
-<label class="text-sm text-gray-400 block mb-1">چرخه‌ها</label>
-<input id="cycles" type="number" min="1" value="4" class="w-28 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-center">
-</div>
-</div>
+      <!-- فرم ایجاد جلسه -->
+      <div id="sessionForm" class="mb-8 text-left text-gray-300 space-y-4">
+        <label class="block text-gray-300 font-medium">مبحث درس</label>
+        <input id="sessionTitle" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-gray-100" placeholder="مثلاً: ریاضی فصل ۳">
 
-<label class="block mt-3">بارگذاری فایل درس</label>
-<input type="file" id="lessonFile" accept=".txt,.pdf" class="text-gray-200">
-<div id="fileContent" class="bg-gray-800 text-gray-100 p-3 rounded-lg max-h-64 overflow-auto mt-2"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="text-center">
+            <label class="text-sm text-gray-400 block mb-2">مدت مطالعه (دقیقه)</label>
+            <input id="studyMinutes" type="number" min="1" value="25" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-gray-100 text-center">
+          </div>
+          <div class="text-center">
+            <label class="text-sm text-gray-400 block mb-2">مدت استراحت (دقیقه)</label>
+            <input id="breakMinutes" type="number" min="1" value="5" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-gray-100 text-center">
+          </div>
+          <div class="text-center">
+            <label class="text-sm text-gray-400 block mb-2">چرخه‌ها</label>
+            <input id="cycles" type="number" min="1" value="4" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-gray-100 text-center">
+          </div>
+        </div>
 
-<div class="mt-4 flex gap-3">
-<button id="startBtn" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold">شروع جلسه</button>
-<a href="/index.html"><button id="backBtn" class="px-4 py-2 bg-gray-700 hover:bg-gray-800 rounded-lg font-semibold">بازگشت به داشبورد</button></a>
-</div>
-</div>
+        <label class="block mt-4 text-gray-300 font-medium">بارگذاری فایل درس</label>
+        <input type="file" id="lessonFile" accept=".txt,.pdf" class="text-gray-200 file:btn-primary file:px-4 file:py-2 file:rounded-lg file:text-white file:font-medium">
+        <div id="fileContent" class="bg-slate-800 text-gray-100 p-4 rounded-lg max-h-72 overflow-auto mt-3 border border-slate-700"></div>
 
-<!-- Focus Mode -->
-<div id="focusMode" class="hidden w-full max-w-3xl bg-gray-900 border border-gray-800 rounded-2xl p-6 text-center shadow-lg">
+        <div class="mt-6 flex gap-4 justify-center">
+          <button id="startBtn" class="btn-primary px-6 py-3 rounded-xl font-semibold text-white flex items-center gap-2">
+            <i class="fas fa-play"></i> شروع جلسه
+          </button>
+          <a href="/index.html">
+            <button id="backBtn" class="px-6 py-3 bg-gray-600 rounded-xl font-semibold text-white flex items-center gap-2 hover:bg-gray-700">
+              <i class="fas fa-arrow-right"></i> بازگشت به داشبورد
+            </button>
+          </a>
+        </div>
+      </div>
 
-<div id="modeLabel" class="text-sm text-gray-400 mb-2">حالت: آماده</div>
-<div id="timer" class="text-5xl font-bold text-white mb-2">25:00</div>
-<div id="progressBar" class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
-<div id="progressFill" class="h-full bg-purple-600 w-0"></div>
-</div>
-<div class="text-sm text-gray-300 mt-2">وقفه‌ها: <span id="pausesCount">۰</span></div>
-<div class="text-sm text-gray-300">زمان مفید مطالعه: <span id="activeTime">۰:۰۰</span></div>
+      <!-- Focus Mode -->
+      <div id="focusMode" class="hidden w-full max-w-4xl bg-slate-900/80 backdrop-blur-md border border-slate-700 rounded-2xl p-8 text-center shadow-xl card animate-fade-in">
 
-<div class="flex flex-wrap gap-3 justify-center mt-4">
-<button id="pauseBtn" class="px-6 py-2 bg-gray-700 hover:bg-gray-800 rounded-lg font-semibold text-gray-200">توقف</button>
-<button id="stopBtn" class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold">پایان جلسه</button>
-<button id="fullscreenBtn" class="px-6 py-2 bg-gray-700 hover:bg-gray-800 rounded-lg font-semibold">تمام صفحه</button>
-<button id="downloadCsvBtn" class="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold">دانلود CSV</button>
-</div>
+        <div id="modeLabel" class="text-sm text-gray-400 mb-3 font-medium">حالت: آماده</div>
+        <div id="timer" class="text-6xl font-bold text-blue-300 mb-3">25:00</div>
+        <div id="progressBar" class="w-full h-3 bg-slate-800 rounded-full overflow-hidden mb-4">
+          <div id="progressFill" class="h-full bg-blue-500 transition-all duration-500 w-0"></div>
+        </div>
+        <div class="text-sm text-gray-300 mb-2">وقفه‌ها: <span id="pausesCount">۰</span></div>
+        <div class="text-sm text-gray-300">زمان مفید مطالعه: <span id="activeTime">۰:۰۰</span></div>
 
-<div class="mt-4 text-yellow-400 text-sm" id="notice"></div>
-<video id="camera" width="200" height="150" autoplay muted class="mt-4 rounded-lg border border-gray-700"></video>
+        <div class="flex flex-wrap gap-4 justify-center mt-6">
+          <button id="pauseBtn" class="px-6 py-3 bg-gray-600 rounded-xl font-semibold text-white hover:bg-gray-700 flex items-center gap-2">
+            <i class="fas fa-pause"></i> توقف
+          </button>
+          <button id="stopBtn" class="px-6 py-3 bg-red-600 rounded-xl font-semibold text-white hover:bg-red-700 flex items-center gap-2">
+            <i class="fas fa-stop"></i> پایان جلسه
+          </button>
+          <button id="fullscreenBtn" class="px-6 py-3 bg-gray-600 rounded-xl font-semibold text-white hover:bg-gray-700 flex items-center gap-2">
+            <i class="fas fa-expand"></i> تمام صفحه
+          </button>
+          <button id="downloadCsvBtn" class="px-6 py-3 bg-green-600 rounded-xl font-semibold text-white hover:bg-green-700 flex items-center gap-2">
+            <i class="fas fa-download"></i> دانلود CSV
+          </button>
+        </div>
 
-</div>
+        <div class="mt-4 text-yellow-400 text-sm font-medium" id="notice"></div>
+        <video id="camera" width="320" height="240" autoplay muted class="mt-6 rounded-lg border border-slate-700 mx-auto"></video>
 
-</main>
+      </div>
 
-<script>
-// ==== عناصر ====
-const sessionTitleInput = document.getElementById('sessionTitle');
-const studyMinutesInput = document.getElementById('studyMinutes');
-const breakMinutesInput = document.getElementById('breakMinutes');
-const cyclesInput = document.getElementById('cycles');
-const fileInput = document.getElementById('lessonFile');
-const fileContentDiv = document.getElementById('fileContent');
+    </div>
+  </main>
 
-const sessionForm = document.getElementById('sessionForm');
-const focusMode = document.getElementById('focusMode');
+  <!-- نوار پایین موبایل -->
+  <nav
+    class="lg:hidden fixed bottom-0 w-full bg-slate-900/95 backdrop-blur-lg border-t border-slate-700 flex justify-around py-4 text-gray-300 text-sm shadow-lg"
+    aria-label="نوار ناوبری موبایل"
+  >
+    <a href="/index.html" class="flex flex-col items-center nav-item">
+      <i class="fas fa-home text-xl mb-1"></i>
+      <span>خانه</span>
+    </a>
+    <a href="/plan.html" class="flex flex-col items-center nav-item">
+      <i class="fas fa-calendar text-xl mb-1"></i>
+      <span>برنامه</span>
+    </a>
+    <a href="/focus.html" class="flex flex-col items-center nav-item">
+      <i class="fas fa-bullseye text-xl mb-1"></i>
+      <span>تمرکز</span>
+    </a>
+    <a href="#" class="flex flex-col items-center nav-item">
+      <i class="fas fa-chart-bar text-xl mb-1"></i>
+      <span>آمار</span>
+    </a>
+    <a href="#" class="flex flex-col items-center nav-item">
+      <i class="fas fa-cog text-xl mb-1"></i>
+      <span>تنظیم</span>
+    </a>
+  </nav>
 
-const timerDisplay = document.getElementById('timer');
-const modeLabel = document.getElementById('modeLabel');
-const pausesCountEl = document.getElementById('pausesCount');
-const activeTimeEl = document.getElementById('activeTime');
-const notice = document.getElementById('notice');
-const camera = document.getElementById('camera');
+  <script>
+    // ==== عناصر ====
+    const sessionTitleInput = document.getElementById('sessionTitle');
+    const studyMinutesInput = document.getElementById('studyMinutes');
+    const breakMinutesInput = document.getElementById('breakMinutes');
+    const cyclesInput = document.getElementById('cycles');
+    const fileInput = document.getElementById('lessonFile');
+    const fileContentDiv = document.getElementById('fileContent');
 
-const startBtn = document.getElementById('startBtn');
-const pauseBtn = document.getElementById('pauseBtn');
-const stopBtn = document.getElementById('stopBtn');
-const downloadCsvBtn = document.getElementById('downloadCsvBtn');
-const fullscreenBtn = document.getElementById('fullscreenBtn');
-const backBtn = document.getElementById('backBtn');
+    const sessionForm = document.getElementById('sessionForm');
+    const focusMode = document.getElementById('focusMode');
 
-let studyMinutes=25, breakMinutes=5, totalCycles=1;
-let remainingSeconds, initialSeconds, currentCycle=1;
-let isRunning=false, isPaused=false, currentMode='study';
-let pausesCount=0, actualStudySeconds=0, timerInterval=null;
-let sessions=[];
+    const timerDisplay = document.getElementById('timer');
+    const modeLabel = document.getElementById('modeLabel');
+    const pausesCountEl = document.getElementById('pausesCount');
+    const activeTimeEl = document.getElementById('activeTime');
+    const notice = document.getElementById('notice');
+    const camera = document.getElementById('camera');
 
-// اعلان ساده
-function notify(text){ notice.textContent=text; setTimeout(()=> notice.textContent='',3000); }
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const backBtn = document.getElementById('backBtn');
 
-// فرمت زمان
-function formatTime(s){ const m=Math.floor(s/60); const sec=s%60; return `${m}:${sec.toString().padStart(2,'0')}`; }
+    let studyMinutes = 25, breakMinutes = 5, totalCycles = 1;
+    let remainingSeconds, initialSeconds, currentCycle = 1;
+    let isRunning = false, isPaused = false, currentMode = 'study';
+    let pausesCount = 0, actualStudySeconds = 0, timerInterval = null;
+    let sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
+    let model = null;
+    let lastInteraction = Date.now();
+    let lastStudying = false; // برای تقریبی
 
-// بروزرسانی نمایش
-function updateDisplay(){
-timerDisplay.textContent=formatTime(remainingSeconds);
-modeLabel.textContent=`حالت: ${currentMode==='study'?'مطالعه':'استراحت'} — چرخه ${currentCycle}/${totalCycles}`;
-pausesCountEl.textContent=pausesCount;
-activeTimeEl.textContent=formatTime(actualStudySeconds);
-const pct = 1 - (remainingSeconds/initialSeconds);
-document.getElementById('progressFill').style.width=`${Math.min(100,Math.round(pct*100))}%`;
-}
+    // اعلان ساده
+    function notify(text) { notice.textContent = text; setTimeout(() => notice.textContent = '', 3000); }
 
-// Fullscreen
-fullscreenBtn.addEventListener('click',()=>{
-const el=document.documentElement;
-if(!document.fullscreenElement) el.requestFullscreen();
-else document.exitFullscreen();
-});
+    // فرمت زمان
+    function formatTime(s) { const m = Math.floor(s / 60); const sec = s % 60; return `${m}:${sec.toString().padStart(2, '0')}`; }
 
-// بارگذاری فایل درس
-fileInput.addEventListener('change', e=>{
-const file = e.target.files[0];
-if(!file) return;
-const reader = new FileReader();
-reader.onload = ()=>{ fileContentDiv.textContent=reader.result; }
-reader.readAsText(file);
-});
+    // بروزرسانی نمایش
+    function updateDisplay() {
+      timerDisplay.textContent = formatTime(remainingSeconds);
+      modeLabel.textContent = `حالت: ${currentMode === 'study' ? 'مطالعه' : 'استراحت'} — چرخه ${currentCycle}/${totalCycles}`;
+      pausesCountEl.textContent = pausesCount;
+      activeTimeEl.textContent = formatTime(actualStudySeconds);
+      const pct = 1 - (remainingSeconds / initialSeconds);
+      document.getElementById('progressFill').style.width = `${Math.min(100, Math.round(pct * 100))}%`;
+    }
 
-// ==== Camera + Eye & Activity Tracking ====
-let model=null;
-async function startCamera(){
-try{
-const stream = await navigator.mediaDevices.getUserMedia({video:true,audio:false});
-camera.srcObject=stream;
-camera.style.display='block';
-model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh);
-}catch(e){ console.warn('دوربین فعال نشد',e); }
-}
+    // Fullscreen
+    fullscreenBtn.addEventListener('click', () => {
+      const el = document.documentElement;
+      if (!document.fullscreenElement) el.requestFullscreen();
+      else document.exitFullscreen();
+    });
 
-// تشخیص مطالعه واقعی
-let lastInteraction = Date.now();
-fileContentDiv.addEventListener('scroll',()=>{ lastInteraction=Date.now(); });
-fileContentDiv.addEventListener('mousemove',()=>{ lastInteraction=Date.now(); });
+    // بارگذاری فایل درس
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      fileContentDiv.innerHTML = ''; // پاک کردن قبلی
+      if (file.type === 'application/pdf') {
+        const loadingTask = pdfjsLib.getDocument(URL.createObjectURL(file));
+        try {
+          const pdf = await loadingTask.promise;
+          let text = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map(item => item.str).join(' ') + '\n\n';
+          }
+          fileContentDiv.textContent = text;
+        } catch (err) {
+          console.error('خطا در خواندن PDF:', err);
+          notify('خطا در خواندن فایل PDF');
+        }
+      } else {
+        const reader = new FileReader();
+        reader.onload = () => { fileContentDiv.textContent = reader.result; };
+        reader.readAsText(file);
+      }
+    });
 
-async function isStudying(){
-if(!model || !isRunning || isPaused) return false;
-const predictions = await model.estimateFaces({input:camera});
-if(predictions.length===0) return false;
-const leftEye = predictions[0].annotations.leftEyeUpper0.concat(predictions[0].annotations.leftEyeLower0);
-const rightEye = predictions[0].annotations.rightEyeUpper0.concat(predictions[0].annotations.rightEyeLower0);
-function eyeOpen(eye){ let yMax=Math.max(...eye.map(p=>p[1])); let yMin=Math.min(...eye.map(p=>p[1])); return (yMax-yMin)>5; }
-const looking = eyeOpen(leftEye) && eyeOpen(rightEye);
-const active = (Date.now()-lastInteraction)<5000; // تعامل اخیر با فایل
-return looking && active;
-}
+    // ==== Camera + Eye & Activity Tracking ====
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        camera.srcObject = stream;
+        camera.style.display = 'block';
+        model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh);
+      } catch (e) {
+        console.warn('دوربین فعال نشد', e);
+        notify('دوربین فعال نشد. تشخیص مطالعه محدود خواهد بود.');
+      }
+    }
 
-// ==== تایمر ====
-async function startInterval(){
-if(timerInterval) return;
-timerInterval = setInterval(async()=>{
-if(!isRunning || isPaused) return;
-remainingSeconds--;
-const studying = await isStudying();
-if(currentMode==='study' && studying){ actualStudySeconds++; }
-else if(currentMode==='study' && !studying){ notify('وقفه: مطالعه واقعی تشخیص داده نشد'); }
-if(remainingSeconds<=0){
-if(currentMode==='study'){ currentMode='break'; remainingSeconds=breakMinutes*60; initialSeconds=remainingSeconds; notify('زمان مطالعه تمام شد، استراحت آغاز شد'); }
-else{ if(currentCycle<totalCycles){ currentCycle++; currentMode='study'; remainingSeconds=studyMinutes*60; initialSeconds=remainingSeconds; notify('استراحت تمام شد، مطالعه آغاز شد'); }
-else{ stopSession(true); notify('جلسه تکمیل شد'); } }
-}
-updateDisplay();
-},1000);
-}
+    // تشخیص مطالعه واقعی (هر 5 ثانیه چک)
+    let checkCounter = 0;
+    async function isStudying() {
+      if (!model) return true; // اگر مدل بارگذاری نشد، فرض مطالعه
+      const predictions = await model.estimateFaces({ input: camera });
+      if (predictions.length === 0) return false;
+      const leftEye = predictions[0].annotations.leftEyeUpper0.concat(predictions[0].annotations.leftEyeLower0);
+      const rightEye = predictions[0].annotations.rightEyeUpper0.concat(predictions[0].annotations.rightEyeLower0);
+      function eyeOpen(eye) {
+        let yMax = Math.max(...eye.map(p => p[1]));
+        let yMin = Math.min(...eye.map(p => p[1]));
+        return (yMax - yMin) > 10; // آستانه بهبودیافته
+      }
+      const looking = eyeOpen(leftEye) && eyeOpen(rightEye);
+      const active = (Date.now() - lastInteraction) < 5000; // تعامل اخیر
+      return looking && active;
+    }
 
-// ==== کنترل‌ها ====
-startBtn.addEventListener('click',()=>{
-studyMinutes = parseInt(studyMinutesInput.value)||25;
-breakMinutes = parseInt(breakMinutesInput.value)||5;
-totalCycles = parseInt(cyclesInput.value)||1;
-remainingSeconds=studyMinutes*60; initialSeconds=remainingSeconds;
-currentCycle=1; currentMode='study'; pausesCount=0; actualStudySeconds=0;
-isRunning=true; isPaused=false;
-sessionForm.classList.add('hidden');
-focusMode.classList.remove('hidden');
-updateDisplay();
-startCamera();
-startInterval();
-notify('جلسه آغاز شد');
-});
+    fileContentDiv.addEventListener('scroll', () => { lastInteraction = Date.now(); });
+    fileContentDiv.addEventListener('mousemove', () => { lastInteraction = Date.now(); });
 
-pauseBtn.addEventListener('click',()=>{ if(!isRunning) return; isPaused=!isPaused; if(isPaused){ pausesCount++; notify('تایمر متوقف شد'); }else{ notify('ادامه تایمر'); } updateDisplay(); });
+    // ==== تایمر ====
+    async function startInterval() {
+      if (timerInterval) return;
+      timerInterval = setInterval(async () => {
+        if (!isRunning || isPaused) return;
+        remainingSeconds--;
+        if (remainingSeconds < 0) remainingSeconds = 0; // جلوگیری از منفی
+        let studying = lastStudying;
+        if (++checkCounter % 5 === 0) { // هر 5 ثانیه چک
+          studying = await isStudying();
+          lastStudying = studying;
+        }
+        if (currentMode === 'study') {
+          if (studying) actualStudySeconds++;
+          else notify('وقفه: مطالعه واقعی تشخیص داده نشد');
+        }
+        if (remainingSeconds <= 0) {
+          if (currentMode === 'study') {
+            currentMode = 'break';
+            remainingSeconds = breakMinutes * 60;
+            initialSeconds = remainingSeconds;
+            notify('زمان مطالعه تمام شد، استراحت آغاز شد');
+          } else {
+            if (currentCycle < totalCycles) {
+              currentCycle++;
+              currentMode = 'study';
+              remainingSeconds = studyMinutes * 60;
+              initialSeconds = remainingSeconds;
+              notify('استراحت تمام شد، مطالعه آغاز شد');
+            } else {
+              stopSession(true);
+              notify('جلسه تکمیل شد');
+            }
+          }
+        }
+        updateDisplay();
+      }, 1000);
+    }
 
-stopBtn.addEventListener('click',()=>{ stopSession(false); });
+    // ==== کنترل‌ها ====
+    startBtn.addEventListener('click', () => {
+      studyMinutes = parseInt(studyMinutesInput.value) || 25;
+      breakMinutes = parseInt(breakMinutesInput.value) || 5;
+      totalCycles = parseInt(cyclesInput.value) || 1;
+      remainingSeconds = studyMinutes * 60;
+      initialSeconds = remainingSeconds;
+      currentCycle = 1;
+      currentMode = 'study';
+      pausesCount = 0;
+      actualStudySeconds = 0;
+      isRunning = true;
+      isPaused = false;
+      sessionForm.classList.add('hidden');
+      focusMode.classList.remove('hidden');
+      updateDisplay();
+      startCamera();
+      startInterval();
+      notify('جلسه آغاز شد');
+    });
 
-backBtn.addEventListener('click',()=>{
-focusMode.classList.add('hidden');
-sessionForm.classList.remove('hidden');
-notify('بازگشت به داشبورد');
-});
+    pauseBtn.addEventListener('click', () => {
+      if (!isRunning) return;
+      isPaused = !isPaused;
+      if (isPaused) { pausesCount++; notify('تایمر متوقف شد'); }
+      else { notify('ادامه تایمر'); }
+      updateDisplay();
+    });
 
-// پایان جلسه
-function stopSession(auto=false){
-isRunning=false; clearInterval(timerInterval); timerInterval=null;
-sessions.push({
-title: sessionTitleInput.value || 'بدون عنوان',
-plannedMinutes: studyMinutes,
-actualSeconds: actualStudySeconds,
-pauses: pausesCount,
-cycles: currentCycle,
-completed:auto
-});
-updateDisplay();
-notify(auto?'جلسه تکمیل شد':'جلسه متوقف شد');
-}
+    stopBtn.addEventListener('click', () => { stopSession(false); });
 
-// خروجی CSV
-downloadCsvBtn.addEventListener('click',()=>{
-if(!sessions.length){ notify('تاریخی وجود ندارد'); return; }
-const header = ['title','plannedMinutes','actualSeconds','pauses','cycles','completed'];
-const csv = [header.join(',')].concat(sessions.map(r=>header.map(h=>r[h]??'').join(','))).join('\n');
-const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a'); a.href=url;
-a.download = `sessions_${new Date().toISOString().slice(0,10)}.csv`; a.click();
-URL.revokeObjectURL(url);
-});
-</script>
+    backBtn.addEventListener('click', () => {
+      focusMode.classList.add('hidden');
+      sessionForm.classList.remove('hidden');
+      notify('بازگشت به داشبورد');
+    });
 
+    // پایان جلسه
+    function stopSession(auto = false) {
+      isRunning = false;
+      clearInterval(timerInterval);
+      timerInterval = null;
+      sessions.push({
+        title: sessionTitleInput.value || 'بدون عنوان',
+        date: new Date().toISOString(),
+        plannedMinutes: studyMinutes,
+        actualSeconds: actualStudySeconds,
+        pauses: pausesCount,
+        cycles: currentCycle,
+        completed: auto
+      });
+      localStorage.setItem('sessions', JSON.stringify(sessions));
+      updateDisplay();
+      notify(auto ? 'جلسه تکمیل شد' : 'جلسه متوقف شد');
+    }
+
+    // خروجی CSV
+    downloadCsvBtn.addEventListener('click', () => {
+      if (!sessions.length) { notify('تاریخی وجود ندارد'); return; }
+      const header = ['title', 'date', 'plannedMinutes', 'actualSeconds', 'pauses', 'cycles', 'completed'];
+      const csv = [header.join(',')].concat(sessions.map(r => header.map(h => r[h] ?? '').join(','))).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sessions_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // انیمیشن برای عناصر
+    document.querySelectorAll('.animate-fade-in').forEach((el, i) => {
+      el.style.animationDelay = `${i * 0.1}s`;
+    });
+  </script>
 </body>
 </html>
