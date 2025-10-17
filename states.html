@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edu Planner - آمار</title>
+  <script src="https://kit.fontawesome.com/a2d9d6a56f.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: "Vazirmatn", sans-serif;
+      background-color: #ffffff;
+    }
+  </style>
+</head>
+<body class="text-slate-700 bg-white">
+  <div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="hidden lg:flex flex-col w-64 bg-white/90 border-l border-cyan-100 shadow-xl rounded-tr-3xl rounded-br-3xl p-6 fixed top-0 bottom-0 right-0">
+      <h1 class="text-2xl font-bold text-cyan-500 mb-8">Edu Planner</h1>
+
+      <!-- Profile -->
+      <div class="flex items-center gap-3 bg-white border border-cyan-100 shadow-md rounded-2xl px-3 py-2 mb-6">
+        <div class="w-10 h-10 rounded-full bg-cyan-500 text-white flex items-center justify-center font-semibold">م</div>
+        <div>
+          <p class="font-semibold text-sm">محمد رضایی</p>
+          <p class="text-xs text-slate-500">دانشجو</p>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex flex-col gap-5 text-slate-600">
+        <a href="/index.html" class="flex items-center gap-3 hover:text-cyan-400">
+          <i class="fas fa-home"></i> داشبورد
+        </a>
+        <a href="/plan.html" class="flex items-center gap-3 hover:text-cyan-400">
+          <i class="fas fa-calendar"></i> برنامه‌ها
+        </a>
+        <a href="/focus.html" class="flex items-center gap-3 hover:text-cyan-400">
+          <i class="fas fa-bullseye"></i> تمرکز
+        </a>
+        <a href="/stats.html" class="flex items-center gap-3 text-cyan-500 font-semibold">
+          <i class="fas fa-chart-bar"></i> آمار
+        </a>
+        <a href="#" class="flex items-center gap-3 hover:text-cyan-400">
+          <i class="fas fa-cog"></i> تنظیمات
+        </a>
+      </nav>
+
+      <button class="mt-auto bg-cyan-500 text-white py-2 rounded-xl shadow-lg hover:bg-cyan-400 transition">
+        خروج
+      </button>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-6 pb-20 lg:pr-72 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold">آمار پیشرفت</h2>
+        <select id="timeRange" class="border border-cyan-200 rounded-lg px-3 py-1 text-sm">
+          <option value="week" selected>هفته جاری</option>
+          <option value="month">ماه جاری</option>
+        </select>
+      </header>
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-2xl border border-cyan-100 shadow-md shadow-cyan-100/50 p-4 text-center">
+          <p class="text-sm text-slate-500">کل ساعات مطالعه</p>
+          <h3 id="totalHours" class="text-xl font-bold text-cyan-500 mt-1">0 ساعت</h3>
+        </div>
+        <div class="bg-white rounded-2xl border border-cyan-100 shadow-md shadow-cyan-100/50 p-4 text-center">
+          <p class="text-sm text-slate-500">جلسات انجام‌شده</p>
+          <h3 id="totalSessions" class="text-xl font-bold text-cyan-500 mt-1">0 جلسه</h3>
+        </div>
+        <div class="bg-white rounded-2xl border border-cyan-100 shadow-md shadow-cyan-100/50 p-4 text-center">
+          <p class="text-sm text-slate-500">درصد هدف</p>
+          <h3 id="goalPercent" class="text-xl font-bold text-cyan-500 mt-1">0٪</h3>
+        </div>
+        <div class="bg-white rounded-2xl border border-cyan-100 shadow-md shadow-cyan-100/50 p-4 text-center">
+          <p class="text-sm text-slate-500">روز پربازده</p>
+          <h3 id="bestDay" class="text-xl font-bold text-cyan-500 mt-1">-</h3>
+        </div>
+      </div>
+
+      <!-- Weekly Chart -->
+      <div class="bg-white rounded-2xl border border-cyan-100 shadow-lg shadow-cyan-100/50 p-5 mb-6">
+        <h4 class="font-semibold mb-3">نمودار هفتگی</h4>
+        <canvas id="weeklyChart" height="100"></canvas>
+      </div>
+
+      <!-- Monthly Chart -->
+      <div class="bg-white rounded-2xl border border-cyan-100 shadow-lg shadow-cyan-100/50 p-5 mb-6">
+        <h4 class="font-semibold mb-3">نمودار ماهانه</h4>
+        <canvas id="monthlyChart" height="100"></canvas>
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="lg:hidden fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-cyan-100 flex justify-around py-5 text-slate-700 text-sm shadow-2xl">
+    <a href="/index.html" class="flex flex-col items-center hover:text-cyan-400">
+      <i class="fas fa-home text-xl mb-1"></i>
+      <span>خانه</span>
+    </a>
+    <a href="/plan.html" class="flex flex-col items-center hover:text-cyan-400">
+      <i class="fas fa-calendar text-xl mb-1"></i>
+      <span>برنامه</span>
+    </a>
+    <a href="/focus.html" class="flex flex-col items-center hover:text-cyan-400">
+      <i class="fas fa-bullseye text-xl mb-1"></i>
+      <span>تمرکز</span>
+    </a>
+    <a href="/stats.html" class="flex flex-col items-center text-cyan-500">
+      <i class="fas fa-chart-bar text-xl mb-1"></i>
+      <span>آمار</span>
+    </a>
+    <a href="#" class="flex flex-col items-center hover:text-cyan-400">
+      <i class="fas fa-cog text-xl mb-1"></i>
+      <span>تنظیم</span>
+    </a>
+  </nav>
+
+  <!-- Scripts -->
+  <script>
+    // داده نمونه (در عمل از جدول یا localStorage خوانده می شود)
+    const weeklyData = [2, 4, 3, 5, 4, 3, 4]; // ساعت مطالعه هر روز هفته
+    const monthlyData = [20, 25, 30, 29]; // مجموع ساعات هر هفته در ماه
+
+    // بروزرسانی KPI ها
+    function updateKPI() {
+      const totalHours = weeklyData.reduce((a,b)=>a+b,0);
+      document.getElementById('totalHours').textContent = totalHours + " ساعت";
+      document.getElementById('totalSessions').textContent = weeklyData.filter(h=>h>0).length + " جلسه";
+      document.getElementById('goalPercent').textContent = Math.round(totalHours/29*100) + "٪"; // هدف 29 ساعت
+      const maxDay = weeklyData.indexOf(Math.max(...weeklyData));
+      const days = ['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'];
+      document.getElementById('bestDay').textContent = days[maxDay];
+    }
+
+    // نمودار هفتگی
+    const ctxWeek = document.getElementById('weeklyChart').getContext('2d');
+    const weeklyChart = new Chart(ctxWeek, {
+      type: 'bar',
+      data: {
+        labels: ['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'],
+        datasets: [
+          {
+            label: 'من',
+            data: weeklyData,
+            backgroundColor: '#06b6d4'
+          },
+          {
+            label: 'هدف روزانه',
+            data: Array(7).fill(29/7),
+            borderColor: '#cbd5e1',
+            borderWidth: 2,
+            type: 'line',
+            fill: false,
+            tension: 0.4
+          }
+        ]
+      },
+      options: { responsive:true, scales:{y:{beginAtZero:true,title:{display:true,text:'ساعت مطالعه'}}} }
+    });
+
+    // نمودار ماهانه
+    const ctxMonth = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyChart = new Chart(ctxMonth, {
+      type: 'line',
+      data: {
+        labels: ['هفته 1','هفته 2','هفته 3','هفته 4'],
+        datasets: [
+          {
+            label:'ساعات مطالعه',
+            data: monthlyData,
+            borderColor:'#06b6d4',
+            backgroundColor:'rgba(6,182,212,0.1)',
+            fill:true,
+            tension:0.3
+          },
+          {
+            label:'هدف هفتگی',
+            data: Array(4).fill(29),
+            borderColor:'#cbd5e1',
+            borderDash:[6,6],
+            fill:false,
+            tension:0.3
+          }
+        ]
+      },
+      options:{ responsive:true, scales:{y:{beginAtZero:true,title:{display:true,text:'ساعت مطالعه'}}} }
+    });
+
+    updateKPI();
+  </script>
+</body>
+</html>
